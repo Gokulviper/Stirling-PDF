@@ -19,8 +19,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
@@ -158,7 +156,8 @@ public class StampController {
             String colorString) // Y override
             throws IOException {
         String resourceDir = "";
-        PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        File fontFile = new File("src/main/resources/fonts/DejaVuSans-Oblique.ttf");
+        PDType0Font font = PDType0Font.load(document, fontFile);
         switch (alphabet) {
             case "arabic":
                 resourceDir = "static/fonts/NotoSansArabic-Regular.ttf";
@@ -174,19 +173,18 @@ public class StampController {
                 break;
             case "roman":
             default:
-                resourceDir = "static/fonts/NotoSans-Regular.ttf";
+                resourceDir = "static/fonts/DejaVuSans-Oblique.ttf";
                 break;
         }
 
         if (!"".equals(resourceDir)) {
             ClassPathResource classPathResource = new ClassPathResource(resourceDir);
             String fileExtension = resourceDir.substring(resourceDir.lastIndexOf("."));
-            File tempFile = Files.createTempFile("NotoSansFont", fileExtension).toFile();
+            File tempFile = Files.createTempFile("DejaVuSans-Oblique", fileExtension).toFile();
             try (InputStream is = classPathResource.getInputStream();
                     FileOutputStream os = new FileOutputStream(tempFile)) {
                 IOUtils.copy(is, os);
             }
-
             font = PDType0Font.load(document, tempFile);
             tempFile.deleteOnExit();
         }
