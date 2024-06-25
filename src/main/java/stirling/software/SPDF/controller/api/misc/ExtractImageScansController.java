@@ -5,11 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -104,10 +102,7 @@ public class ExtractImageScansController {
                 }
             } else {
                 tempInputFile = Files.createTempFile("input_", "." + extension);
-                Files.copy(
-                        form.getFileInput().getInputStream(),
-                        tempInputFile,
-                        StandardCopyOption.REPLACE_EXISTING);
+                form.getFileInput().transferTo(tempInputFile);
                 // Add input file path to images list
                 images.add(tempInputFile.toString());
             }
@@ -143,8 +138,7 @@ public class ExtractImageScansController {
                                 .runCommandWithOutputHandling(command);
 
                 // Read the output photos in temp directory
-                List<Path> tempOutputFiles =
-                        Files.list(tempDir).sorted().collect(Collectors.toList());
+                List<Path> tempOutputFiles = Files.list(tempDir).sorted().toList();
                 for (Path tempOutputFile : tempOutputFiles) {
                     byte[] imageBytes = Files.readAllBytes(tempOutputFile);
                     processedImageBytes.add(imageBytes);
@@ -156,7 +150,7 @@ public class ExtractImageScansController {
             // Create zip file if multiple images
             if (processedImageBytes.size() > 1) {
                 String outputZipFilename =
-                        fileName.replaceFirst("[.][^.]+$", "") + "_processed.zip";
+                        fileName.replaceFirst(REPLACEFIRST, "") + "_processed.zip";
                 tempZipFile = Files.createTempFile("output_", ".zip");
 
                 try (ZipOutputStream zipOut =
@@ -165,7 +159,7 @@ public class ExtractImageScansController {
                     for (int i = 0; i < processedImageBytes.size(); i++) {
                         ZipEntry entry =
                                 new ZipEntry(
-                                        fileName.replaceFirst("[.][^.]+$", "")
+                                        fileName.replaceFirst(REPLACEFIRST, "")
                                                 + "_"
                                                 + (i + 1)
                                                 + ".png");
@@ -178,16 +172,20 @@ public class ExtractImageScansController {
                 byte[] zipBytes = Files.readAllBytes(tempZipFile);
 
                 // Clean up the temporary zip file
-                Files.delete(tempZipFile);
+                Files.deleteIfExists(tempZipFile);
 
                 return WebResponseUtils.bytesToWebResponse(
                         zipBytes, outputZipFilename, MediaType.APPLICATION_OCTET_STREAM);
+            }
+            if (processedImageBytes.size() == 0) {
+                throw new IllegalArgumentException("No images detected");
             } else {
+
                 // Return the processed image as a response
                 byte[] imageBytes = processedImageBytes.get(0);
                 return WebResponseUtils.bytesToWebResponse(
                         imageBytes,
-                        fileName.replaceFirst("[.][^.]+$", "") + ".png",
+                        fileName.replaceFirst(REPLACEFIRST, "") + ".png",
                         MediaType.IMAGE_PNG);
             }
         } finally {
@@ -203,7 +201,7 @@ public class ExtractImageScansController {
 
             if (tempZipFile != null && Files.exists(tempZipFile)) {
                 try {
-                    Files.delete(tempZipFile);
+                    Files.deleteIfExists(tempZipFile);
                 } catch (IOException e) {
                     logger.error("Failed to delete temporary zip file: " + tempZipFile, e);
                 }
@@ -219,4 +217,6 @@ public class ExtractImageScansController {
                     });
         }
     }
+
+    private static final String REPLACEFIRST = "[.][^.]+$";
 }
