@@ -156,8 +156,10 @@ public class StampController {
             String colorString) // Y override
             throws IOException {
         String resourceDir = "";
-        File fontFile = new File("src/main/resources/fonts/DejaVuSans-Oblique.ttf");
-        PDType0Font font = PDType0Font.load(document, fontFile);
+        //        File fontFile = new File("src/main/resources/fonts/DejaVuSans-Oblique.ttf");
+        //        PDType0Font font = PDType0Font.load(document, fontFile);
+        //        File fontFile = new File("src/main/resources/fonts/NotoSans-Regular.ttf");
+        //        PDType0Font font = PDType0Font.load(document, fontFile);
         switch (alphabet) {
             case "arabic":
                 resourceDir = "static/fonts/NotoSansArabic-Regular.ttf";
@@ -173,13 +175,17 @@ public class StampController {
                 break;
             case "roman":
             default:
+                //                resourceDir = "static/fonts/NotoSans-Regular.ttf";
                 resourceDir = "static/fonts/DejaVuSans-Oblique.ttf";
                 break;
         }
+        PDType0Font font = null;
 
         if (!"".equals(resourceDir)) {
             ClassPathResource classPathResource = new ClassPathResource(resourceDir);
             String fileExtension = resourceDir.substring(resourceDir.lastIndexOf("."));
+            //            File tempFile = Files.createTempFile("NotoSansFont",
+            // fileExtension).toFile();
             File tempFile = Files.createTempFile("DejaVuSans-Oblique", fileExtension).toFile();
             try (InputStream is = classPathResource.getInputStream();
                     FileOutputStream os = new FileOutputStream(tempFile)) {
@@ -191,9 +197,7 @@ public class StampController {
                 }
             }
 
-            font = PDType0Font.load(document, tempFile);
-            tempFile.deleteOnExit();
-
+           
         }
 
         contentStream.setFont(font, fontSize);
