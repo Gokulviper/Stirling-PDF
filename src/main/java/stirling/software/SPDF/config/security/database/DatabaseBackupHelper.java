@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
-import stirling.software.SPDF.config.DatabaseBackupInterface;
+import stirling.software.SPDF.config.interfaces.DatabaseBackupInterface;
 import stirling.software.SPDF.utils.FileInfo;
 
 @Slf4j
@@ -33,6 +33,12 @@ public class DatabaseBackupHelper implements DatabaseBackupInterface {
 
     @Value("${spring.datasource.url}")
     private String url;
+
+    @Value("${spring.datasource.username}")
+    private String databaseUsername;
+
+    @Value("${spring.datasource.password}")
+    private String databasePassword;
 
     private Path backupPath = Paths.get("configs/db/backup/");
 
@@ -134,7 +140,8 @@ public class DatabaseBackupHelper implements DatabaseBackupInterface {
                 this.getBackupFilePath("backup_" + dateNow.format(myFormatObj) + ".sql");
         String query = "SCRIPT SIMPLE COLUMNS DROP to ?;";
 
-        try (Connection conn = DriverManager.getConnection(url, "sa", "");
+        try (Connection conn =
+                        DriverManager.getConnection(url, databaseUsername, databasePassword);
                 PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, insertOutputFilePath.toString());
             stmt.execute();
@@ -147,7 +154,8 @@ public class DatabaseBackupHelper implements DatabaseBackupInterface {
     // Retrieves the H2 database version.
     public String getH2Version() {
         String version = "Unknown";
-        try (Connection conn = DriverManager.getConnection(url, "sa", "")) {
+        try (Connection conn =
+                DriverManager.getConnection(url, databaseUsername, databasePassword)) {
             try (Statement stmt = conn.createStatement();
                     ResultSet rs = stmt.executeQuery("SELECT H2VERSION() AS version")) {
                 if (rs.next()) {
@@ -189,7 +197,8 @@ public class DatabaseBackupHelper implements DatabaseBackupInterface {
     private boolean executeDatabaseScript(Path scriptPath) {
         String query = "RUNSCRIPT from ?;";
 
-        try (Connection conn = DriverManager.getConnection(url, "sa", "");
+        try (Connection conn =
+                        DriverManager.getConnection(url, databaseUsername, databasePassword);
                 PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, scriptPath.toString());
             stmt.execute();

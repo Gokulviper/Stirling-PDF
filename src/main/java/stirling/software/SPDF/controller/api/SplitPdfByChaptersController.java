@@ -32,9 +32,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import stirling.software.SPDF.config.PdfMetadataService;
 import stirling.software.SPDF.model.PdfMetadata;
 import stirling.software.SPDF.model.api.SplitPdfByChaptersRequest;
+import stirling.software.SPDF.service.PdfMetadataService;
 import stirling.software.SPDF.utils.WebResponseUtils;
 
 @RestController
@@ -67,15 +67,6 @@ public class SplitPdfByChaptersController {
         }
         PDDocument sourceDocument = Loader.loadPDF(file.getBytes());
 
-        // checks if the document is encrypted by an empty user password
-        if (sourceDocument.isEncrypted()) {
-            try {
-                sourceDocument.setAllSecurityToBeRemoved(true);
-                logger.info("Removing security from the source document ");
-            } catch (Exception e) {
-                logger.warn("Cannot decrypt the pdf");
-            }
-        }
         PDDocumentOutline outline = sourceDocument.getDocumentCatalog().getDocumentOutline();
 
         if (outline == null) {
